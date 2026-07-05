@@ -15,6 +15,7 @@ class handdetector:
         self.prev_middle_index = None
         self.prev_reference = None
         self.results = None
+        self.current_hand = None
 
     def gethands(self , img):
         ctime = 0
@@ -23,12 +24,15 @@ class handdetector:
         self.results = self.hands.process(imgrgb)
 
         if self.results.multi_hand_landmarks:
+            self.current_hand = self.results.multi_hand_landmarks[0]
             for handlms in self.results.multi_hand_landmarks:
                 self.mpdraw.draw_landmarks(img , handlms , mphands.HAND_CONNECTIONS)
                 for id , lm in enumerate(handlms.landmark):
                     h,w,c = img.shape
                     cx , cy = int(lm.x * w) , int(lm.y * h)
-                
+        else:
+            self.current_hand = None    
+            
         ctime = time.time()
         fps = 1/(ctime - self.ptime)
         self.ptime = ctime
@@ -90,7 +94,22 @@ class handdetector:
         }
 
         return distances
+    
+    # Need to smooth and normalize later
+    def getindexlandmarks(self, img):
+        if self.current_hand is None:
+            return None
 
+        h, w, _ = img.shape
+
+        tip = self.current_hand.landmark[8]
+
+        x = int(tip.x * w)
+        y = int(tip.y * h)
+
+        
+
+        return x, y
 
     def smoothvalues(self , calculated_distances ):
 
@@ -132,11 +151,11 @@ class handdetector:
         }
 
         return smoothed_distances
-
+       
 
     def getcurrentpose(self , img):
         imgrgb = cv.cvtColor(img , cv.COLOR_BGR2RGB)
-
+        
         if self.results.multi_hand_landmarks:
             hand = self.results.multi_hand_landmarks[0]
             h , w ,c = imgrgb.shape
@@ -159,20 +178,8 @@ class handdetector:
             cv.putText(img , str(middle_index_distance) , (80 , 160) , cv.FONT_HERSHEY_COMPLEX , 1 , (0 , 255 , 0 ) , thickness= 2)
             cv.putText(img , str(thumb_middle_distance) , (80 , 130) , cv.FONT_HERSHEY_COMPLEX , 1 , (0 , 255 , 0 ) , thickness= 2)
 
-        cv.imshow('img' , img)
-        cv.waitKey(1)
+    
 
-cap = cv.VideoCapture(0)
-
-cap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv.CAP_PROP_FRAME_HEIGHT, 720)
-h = handdetector()
-
-while True:
-    Succcess , img = cap.read()
-
-    img = cv.flip(img , 1)
-    h.gethands(img)
 
 
 
