@@ -1,4 +1,3 @@
-"# Magic-Whiteboard" 
+"# Magic-Whiteboard"
 
-
-Work in progress 
+Work in progress
